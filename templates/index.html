@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Garuda — AI Chat Filter</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #0f1218;
+    --surface2: #151a22;
+    --border: #1e2530;
+    --accent: #e8a020;
+    --accent2: #f0c050;
+    --red: #e05030;
+    --green: #30c080;
+    --yellow: #e0b020;
+    --text: #c8d4e0;
+    --muted: #556070;
+    --font-head: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-body: 'Exo 2', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .logo-text h1 {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--accent);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .logo-text p {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  .status-badge {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(48,192,128,0.08);
+    border: 1px solid rgba(48,192,128,0.2);
+    padding: 5px 12px;
+    border-radius: 3px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 0;
+    width: 100%;
+    max-width: 1200px;
+    flex: 1;
+    padding: 30px 24px;
+    gap: 24px;
+  }
+
+  /* ── CHAT PANEL ── */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .panel-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chat-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 420px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-window::-webkit-scrollbar { width: 4px; }
+  .chat-window::-webkit-scrollbar-track { background: transparent; }
+  .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .msg-tag {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .tag-clean { background: rgba(48,192,128,0.12); color: var(--green); border: 1px solid rgba(48,192,128,0.25); }
+  .tag-mild { background: rgba(224,176,32,0.12); color: var(--yellow); border: 1px solid rgba(224,176,32,0.25); }
+  .tag-moderate { background: rgba(224,80,48,0.12); color: var(--red); border: 1px solid rgba(224,80,48,0.3); }
+  .tag-severe { background: rgba(224,48,48,0.2); color: #ff4444; border: 1px solid rgba(255,68,68,0.4); }
+
+  .message-bubble {
+    background: var(--surface2);
+    border-left: 3px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .message-bubble.flagged {
+    border-left-color: var(--red);
+    background: rgba(224,80,48,0.05);
+  }
+
+  .message-bubble.censored-text {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .filtered-version {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: rgba(232,160,32,0.06);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* ── INPUT AREA ── */
+  .input-area {
+    display: flex;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  .input-area textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    resize: none;
+    height: 44px;
+    line-height: 1.5;
+  }
+
+  .input-area textarea::placeholder { color: var(--muted); }
+
+  .send-btn {
+    background: var(--accent);
+    color: #0a0c10;
+    border: none;
+    padding: 10px 22px;
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    text-transform: uppercase;
+    align-self: flex-end;
+  }
+
+  .send-btn:hover { background: var(--accent2); }
+  .send-btn:active { transform: scale(0.97); }
+
+  /* ── SIDE PANEL ── */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+  }
+
+  .card-title {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(30,37,48,0.5);
+    font-size: 13px;
+  }
+
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+  .stat-value { font-weight: 600; color: var(--text); font-family: var(--font-mono); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+
+  /* severity bar */
+  .severity-bar-wrap {
+    margin-top: 12px;
+  }
+
+  .severity-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .severity-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .severity-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease, background 0.4s ease;
+    width: 0%;
+    background: var(--green);
+  }
+
+  /* last result */
+  .last-result {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .flagged-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .flagged-chip {
+    background: rgba(224,80,48,0.1);
+    border: 1px solid rgba(224,80,48,0.3);
+    color: var(--red);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 2px;
+  }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(232,160,32,0.15);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .empty-state {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    opacity: 0.6;
+  }
+
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 14px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Eagle SVG Logo -->
+  <svg class="logo-icon" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="21,4 26,15 38,15 28,23 32,35 21,27 10,35 14,23 4,15 16,15" fill="none" stroke="#e8a020" stroke-width="1.5"/>
+    <circle cx="21" cy="20" r="5" fill="#e8a020" opacity="0.2"/>
+    <circle cx="21" cy="20" r="2" fill="#e8a020"/>
+    <line x1="21" y1="4" x2="21" y2="38" stroke="#e8a020" stroke-width="0.5" stroke-dasharray="2,3" opacity="0.4"/>
+  </svg>
+  <div class="logo-text">
+    <h1>Garuda</h1>
+    <p>AI Toxicity Filter System</p>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot"></div>
+    SYSTEM ACTIVE
+  </div>
+</header>
+
+<main>
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="panel-label">// Live Chat Monitor</div>
+    <div class="chat-window" id="chatWindow">
+      <div class="empty-state">
+        <div class="empty-icon">🦅</div>
+        <div>Type a message below to test Garuda</div>
+      </div>
+    </div>
+    <div class="input-area">
+      <textarea id="msgInput" placeholder="Type any message… Garuda will analyze it." onkeydown="handleKey(event)"></textarea>
+      <button class="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+
+    <!-- Stats -->
+    <div class="info-card">
+      <div class="card-title">// Session Stats</div>
+      <div class="stat-row">
+        <span class="stat-label">TOTAL MESSAGES</span>
+        <span class="stat-value" id="statTotal">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">CLEAN</span>
+        <span class="stat-value green" id="statClean">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">FLAGGED</span>
+        <span class="stat-value red" id="statFlagged">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">TOXICITY RATE</span>
+        <span class="stat-value yellow" id="statRate">0%</span>
+      </div>
+      <div class="severity-bar-wrap">
+        <div class="severity-bar-label">
+          <span>CLEAN</span><span>TOXIC</span>
+        </div>
+        <div class="severity-bar">
+          <div class="severity-fill" id="severityFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last Result -->
+    <div class="info-card">
+      <div class="card-title">// Last Analysis</div>
+      <div id="lastResult" class="last-result" style="color:var(--muted);font-size:12px;">No message analyzed yet.</div>
+    </div>
+
+    <!-- How it works -->
+    <div class="info-card">
+      <div class="card-title">// How Garuda Works</div>
+      <div class="how-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Input text is normalized — leet speak and abbreviations decoded</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Matched against a scored lexicon (severity 1–3 per word)</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Context checked — common frustration phrases whitelisted</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">Aggression modifiers boost severity of mild words</div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-text">Toxic words censored; filtered message returned</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  let stats = { total: 0, clean: 0, flagged: 0 };
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+
+    const chatWindow = document.getElementById('chatWindow');
+
+    // Remove empty state
+    const empty = chatWindow.querySelector('.empty-state');
+    if (empty) empty.remove();
+
+    // Show user bubble (pending)
+    const bubble = createPendingBubble(msg);
+    chatWindow.appendChild(bubble);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    try {
+      const res = await fetch('/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      updateBubble(bubble, data);
+      updateStats(data);
+      updateLastResult(data);
+    } catch (err) {
+      bubble.querySelector('.message-bubble').textContent = '[Error contacting Garuda server]';
+    }
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function createPendingBubble(msg) {
+    const el = document.createElement('div');
+    el.className = 'message';
+    el.innerHTML = `
+      <div class="message-header">
+        <span style="color:var(--text)">USER</span>
+        <span>${new Date().toLocaleTimeString()}</span>
+        <span class="msg-tag" style="background:rgba(85,96,112,0.2);color:var(--muted);border:1px solid var(--border)">ANALYZING…</span>
+      </div>
+      <div class="message-bubble">${escHtml(msg)}</div>
+    `;
+    return el;
+  }
+
+  function updateBubble(el, data) {
+    const tagEl = el.querySelector('.msg-tag');
+    const bubbleEl = el.querySelector('.message-bubble');
+    const label = data.severity_label;
+
+    tagEl.className = 'msg-tag tag-' + label;
+    tagEl.textContent = label.toUpperCase();
+
+    if (data.is_toxic) {
+      bubbleEl.classList.add('flagged');
+      bubbleEl.innerHTML = `
+        <span style="color:var(--muted);text-decoration:line-through;font-size:12px;">${escHtml(data.original)}</span>
+        <div class="filtered-version">🛡 ${escHtml(data.filtered)}</div>
+      `;
+    }
+  }
+
+  function updateStats(data) {
+    stats.total++;
+    if (data.is_toxic) stats.flagged++;
+    else stats.clean++;
+
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('statClean').textContent = stats.clean;
+    document.getElementById('statFlagged').textContent = stats.flagged;
+
+    const rate = Math.round((stats.flagged / stats.total) * 100);
+    document.getElementById('statRate').textContent = rate + '%';
+
+    const fill = document.getElementById('severityFill');
+    fill.style.width = rate + '%';
+    fill.style.background = rate > 50 ? 'var(--red)' : rate > 20 ? 'var(--yellow)' : 'var(--green)';
+  }
+
+  function updateLastResult(data) {
+    const el = document.getElementById('lastResult');
+    const flaggedWords = data.flagged_words;
+    el.innerHTML = `
+      <div style="margin-bottom:6px;color:var(--text)">${data.reason}</div>
+      <div style="margin-bottom:4px">Severity: <span style="color:${getSeverityColor(data.severity_label)}">${data.severity_label.toUpperCase()}</span></div>
+      <div>Score: <span style="color:var(--accent)">${data.score}</span></div>
+      ${flaggedWords.length ? `
+        <div style="margin-top:10px;margin-bottom:4px;color:var(--muted)">Flagged terms:</div>
+        <div class="flagged-list">
+          ${flaggedWords.map(w => `<span class="flagged-chip">${escHtml(w)}</span>`).join('')}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  function getSeverityColor(label) {
+    return { clean: 'var(--green)', mild: 'var(--yellow)', moderate: 'var(--red)', severe: '#ff4444' }[label] || 'var(--muted)';
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
