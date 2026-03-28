@@ -100,6 +100,28 @@ Get back:
 
 ---
 
+## 📸 Project Showcase
+
+### Core Interface
+The Garuda dashboard provides a real-time view of chat logs and toxicity metrics.
+![Garuda Interface](interface.png)
+
+### Live Filtering Demo
+This demo highlights the hybrid logic: casual slang is permitted, while targeted toxicity is automatically censored.
+![Filtering Demo](demo.png)
+
+---
+
+### 🚀 Key Features
+
+* **Hybrid Filtering Logic**: Combines a weighted severity scoring system with a custom whitelist to reduce false positives.
+* **Context-Aware Analysis**: Uses "Aggression Boosters" to detect when a mild word is being used as a directed insult.
+* **Hinglish Support**: Specifically tuned to detect common toxic expressions in both English and Hindi code-mixed text.
+* **Smart Normalization**: Utilizes Regular Expressions (`re`) to handle "leet speak" (e.g., @ instead of a) and extra whitespace bypass attempts.
+* **Privacy-First Censorship**: Automatically applies partial masking (e.g., `a*****e`) to maintain readability while removing harm.
+
+---
+
 *BYOP submission - Fundamentals in AIML*
 *Name: Vinayak Vishwkarma*
 *Reg no. 25BCE10258*
